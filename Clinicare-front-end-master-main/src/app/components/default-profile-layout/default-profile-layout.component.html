@@ -1,0 +1,115 @@
+<main>
+  <header>
+    <div class="container">
+      <section class="logo col-3">
+        <a href="#"><img src="assets/svg/logo.svg" alt="logo" /></a>
+      </section>
+      <section class="nav-items col-6">
+        <ul id="nav-mid">
+          <li><a href="/inicio">Início</a></li>
+          <li><a href="/servicos">Serviços</a></li>
+          <li><a href="/medicos">Médicos(as)</a></li>
+          <li><a href="/inicio">Contato</a></li>
+        </ul>
+      </section>
+      <section class="entrar col-3">
+        <ng-container *ngIf="isLoggedIn; else notLoggedIn">
+          <a href="/profile"><img class="profile-image-header"
+              [src]="userProfile?.foto || 'caminho/para/imagem/default'" alt="Foto de perfil"
+              (click)="goToProfile()"></a>
+        </ng-container>
+        <ng-template #notLoggedIn>
+          <a (click)="navigate()" class="entrar-button">Entrar</a>
+        </ng-template>
+      </section>
+    </div>
+  </header>
+
+  <!-- Section perfil -->
+  <section class="perfil">
+    <section class="esquerda-perfil">
+      <img class="profile-image" [src]="userProfile?.foto || 'caminho/para/imagem/default'" alt="Foto de perfil">
+      <p id="nome">{{ userProfile.name }}</p>
+      <p>{{ userProfile.email }}</p>
+      <p *ngIf="showBloodType">Tipo Sanguíneo: {{ userProfile.sangue }}</p>
+      <p *ngIf="showEspecialidade">Especialidade: {{ userProfile.especialidade }}</p>
+      <div class="btn-perfil">
+        <button class="btn-logout" (click)="logout()">Sair</button>
+        <button class="btn-delete" (click)="deleteProfile()" [disabled]="disablePrimaryBtn">Deletar a conta</button>
+      </div>
+    </section>
+
+    <section class="direita-perfil">
+      <div class="menu-perfil">
+        <a (click)="setActiveSection('agendamentos')"><button class="btn-agend">{{ buttonLabel }}</button></a>
+        <a (click)="setActiveSection('info')"><button class="btn-info">Perfil(Informações)</button></a>
+      </div>
+      <div class="form-agendamento" *ngIf="activeSection === 'agendamentos'">
+        <h2>{{ buttonLabel }}</h2>
+        <div class="agendamentos-grid" *ngIf="agendamentos.length > 0">
+          <div class="agendamento-card" *ngFor="let agendamento of agendamentos">
+            <div class="card-header">
+              <h3 *ngIf="userProfile.role === 'paciente'">{{ agendamento.medicoNome }}</h3>
+              <h3 *ngIf="userProfile.role === 'medico'">{{ agendamento.pacienteNome }}</h3>
+              <h3 *ngIf="userProfile.role === 'secretario'">
+                {{ agendamento.medicoNome }}
+              </h3>
+              <h3 *ngIf="userProfile.role === 'secretario'">
+                Paciente: {{ agendamento.pacienteNome }}
+              </h3>
+            </div>
+            <div class="card-body">
+              <p><strong>Local:</strong> {{ agendamento.local }}</p>
+              <p><strong>Data:</strong> {{ agendamento.dia }}</p>
+              <p><strong>Hora:</strong> {{ agendamento.hora }}</p>
+              <p *ngIf="userProfile.role !== 'paciente'">
+                <strong>Telefone do Paciente:</strong> {{ agendamento.pacienteTelefone }}
+              </p>
+              <p><strong>Status:</strong> {{ agendamento.status }}</p>
+            </div>
+            <div class="card-footer">
+              <p class="price">R$ {{ agendamento.preco }}</p>
+              <button *ngIf="agendamento.id && agendamento.status === 'Agendado'" (click)="cancelarConsulta(agendamento.id)" class="cancel-btn">
+                Cancelar
+              </button>
+            </div>
+          </div>
+        </div>
+        <div *ngIf="agendamentos.length === 0">
+          <p>Nenhum agendamento encontrado.</p>
+        </div>
+      </div>
+
+      
+      <div class="form-perfil" *ngIf="activeSection === 'info'">
+        <h2>{{ title }}</h2>
+        <ng-content></ng-content>
+        <button class="btn-save" (click)="saveProfile()" [disabled]="disablePrimaryBtn">{{ primaryBtnText }}</button>
+      </div>
+    </section>
+
+  </section>
+
+  <footer>
+    <article class="footer-column-1">
+      <a href="/inicio" class="footer-img"><img src="../../../assets/svg/logo.svg" alt="logo"></a>
+      <img src="../../../assets/svg/redes-sociais.svg" alt="redes-sociais">
+    </article>
+    <article class="footer-column-2">
+      <h3>Links</h3>
+      <ul>
+        <li><a href="/inicio">Início</a></li>
+        <li><a href="/servicos">Serviços</a></li>
+        <li><a href="/medicos">Médicos(as)</a></li>
+        <li><a href="/inicio">Contato</a></li>
+      </ul>
+    </article>
+    <article class="footer-column-3">
+      <h3>Eu quero:</h3>
+      <ul>
+        <li><a href="/medicos">Encontrar um Médico(a)</a></li>
+        <li><a href="/medicos">Solicitar uma Consulta</a></li>
+      </ul>
+    </article>
+  </footer>
+</main>

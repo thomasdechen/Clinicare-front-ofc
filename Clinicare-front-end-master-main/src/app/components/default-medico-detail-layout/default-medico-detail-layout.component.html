@@ -1,0 +1,207 @@
+<main>
+  <header>
+    <div class="container">
+      <section class="logo col-3">
+        <a href="#"><img src="assets/svg/logo.svg" alt="logo" /></a>
+      </section>
+      <section class="nav-items col-6">
+        <ul id="nav-mid">
+          <li><a href="/inicio">Início</a></li>
+          <li><a href="/servicos">Serviços</a></li>
+          <li><a href="/medicos">Médicos(as)</a></li>
+          <li><a href="/inicio">Contato</a></li>
+        </ul>
+      </section>
+      <section class="entrar col-3">
+        <ng-container *ngIf="isLoggedIn; else notLoggedIn">
+          <a href="/profile"><img class="profile-image-header"
+              [src]="userProfile?.foto || 'caminho/para/imagem/default'" alt="Foto de perfil"
+              (click)="goToProfile()"></a>
+        </ng-container>
+        <ng-template #notLoggedIn>
+          <a (click)="navigate()" class="entrar-button">Entrar</a>
+        </ng-template>
+      </section>
+    </div>
+  </header>
+  <section class="medico-detail" *ngIf="medico">
+    <section class="column-esquerda">
+      <section class="row-1">
+        <article>
+          <img [src]="medico.foto || 'caminho/para/imagem/default'" alt="Foto do médico" class="foto-medico">
+        </article>
+        <article class="dados-medico">
+          <h2 class="nome">{{ medico.name }}</h2>
+          <h3 class="especialidade">{{ medico.especialidade }}</h3>
+          <div class="avaliacao-info">
+            <span class="avaliacao-estrelas-media">
+              <i class="fas fa-star" style="color: #ffd700; font-size: 18px;"></i> {{ mediaAvaliacoes }}
+            </span>
+            <span class="num-avaliacoes">({{ numAvaliacoes }} avaliações)</span>
+          </div>
+        </article>
+      </section>
+      <section class="row-2">
+        <article class="menu-sobre-avaliacoes">
+          <a class="menu-sobre" [ngClass]="{ 'active': activeSection === 'sobre' }" (click)="setActiveSection('sobre')">Sobre</a>
+          <a class="menu-avaliacoes" [ngClass]="{ 'active': activeSection === 'avaliacoes' }" (click)="setActiveSection('avaliacoes')">Avaliações</a>
+        </article>
+        <hr class="styled-line">
+        <article class="sobre-avaliacoes" *ngIf="!showAgendamento">
+          <article class="sobre" *ngIf="activeSection === 'sobre'">
+            <p class="sobre-titulo">Sobre <span class="sobre-medico"> {{ medico.name }}</span></p>
+            <p>{{ medico.descricao }}</p>
+            <p class="descricao-medico">{{ medico.name }} é um(a) renomado(a) {{ medico.especialidade }} com
+              especialização em terapias manuais e reabilitação neuromusculoesquelética. Com mais de uma década de
+              experiência clínica, {{ medico.name }} é conhecido(a) por sua abordagem holística no tratamento de
+              pacientes, combinando técnicas avançadas e um cuidado personalizado para promover a recuperação e o
+              bem-estar geral.
+              Formado(a) pela prestigiada Universidade de São Paulo, ele(a) continuou seus estudos em diversas
+              instituições internacionais, aprimorando suas habilidades em terapias inovadoras.</p>
+          </article>
+          <article class="avaliacao" *ngIf="activeSection === 'avaliacoes'">
+            <h3 class="avaliacoes-titulo">Todas as Avaliações ({{ avaliacoes.length }})</h3>
+            <section class="card-avaliacoes" *ngIf="avaliacoes.length > 0">
+              <article class="avaliacao-item" *ngFor="let avaliacao of avaliacoesExibidas"
+                [ngClass]="{'avaliacao-paciente-logado': isAvaliacaoPacienteLogado(avaliacao)}">
+                <article class="avaliacao-conteudo">
+                  <div class="avaliacao-header">
+                    <img [src]="avaliacao.fotoPaciente" alt="Foto do paciente" class="avaliacao-foto">
+                    <div class="avaliacao-info">
+                      <span class="paciente-name">{{ avaliacao.namePaciente }}</span>
+                      <span class="avaliacao-data">{{ avaliacao.criadoEm | date:'dd MMMM yyyy':'':'pt-BR' }}</span>
+                      <div class="avaliacao-estrelas">
+                        <span *ngFor="let star of [1,2,3,4,5]">
+                          <i [class]="star <= avaliacao.estrelas ? 'fas fa-star' : 'far fa-star'"></i>
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="avaliacao-comentario-acoes">
+                    <p class="comentario-avaliacao">{{ avaliacao.comentario }}</p>
+                    <div class="avaliacao-acoes" *ngIf="isAvaliacaoPacienteLogado(avaliacao)">
+                      <button class="btn-alterar" (click)="abrirModalAlterarAvaliacao(avaliacao)">Alterar</button>
+                      <button class="btn-excluir" (click)="excluirAvaliacao(avaliacao.id)">Excluir</button>
+                    </div>
+                  </div>
+                </article>
+              </article>
+            </section>
+            <div class="paginacao" *ngIf="avaliacoes.length > avaliacoesPorPagina">
+              <button (click)="paginaAnterior()" [disabled]="paginaAtual === 1">Anterior</button>
+              <span>Página {{ paginaAtual }} de {{ totalPaginas }}</span>
+              <button (click)="proximaPagina()" [disabled]="paginaAtual === totalPaginas">Próxima</button>
+            </div>
+
+            <p *ngIf="avaliacoes.length === 0">Ainda não há avaliações para este médico.</p>
+            <button *ngIf="isPaciente && !avaliacaoExistente" class="btn-avaliar"
+              (click)="abrirModalAvaliacao()">Avaliar</button>
+          </article>
+
+
+
+          <!-- Modal de criação de avaliação -->
+          <div *ngIf="mostrarModalAvaliacao" class="modal">
+            <div class="modal-conteudo">
+              <h2>Avaliar Médico</h2>
+              <form (ngSubmit)="criarAvaliacao()" class="form-avaliacao">
+                <div class="estrelas-input">
+                  <span *ngFor="let star of [1,2,3,4,5]" (click)="selecionarEstrela(star)">
+                    <i class="fa-star"
+                      [ngClass]="{'fas': star <= novaAvaliacao.estrelas, 'far': star > novaAvaliacao.estrelas}"></i>
+                  </span>
+                </div>
+                <textarea [(ngModel)]="novaAvaliacao.comentario" name="comentario" placeholder="Deixe seu comentário"
+                  maxlength="80" required #comentario="ngModel"></textarea>
+                <div class="caracteres-restantes">
+                  {{ 80 - novaAvaliacao.comentario.length }} caracteres restantes
+                </div>
+                <div class="btn-group">
+                  <button type="submit" class="btn-salvar">Enviar Avaliação</button>
+                  <button type="button" class="btn-cancelar" (click)="fecharModalAvaliacao()">Cancelar</button>
+                </div>
+              </form>
+            </div>
+          </div>
+
+          <!-- Modal de alteração de avaliação -->
+          <div *ngIf="mostrarModalAlterarAvaliacao" class="modal">
+            <div class="modal-conteudo">
+              <h2>Alterar Avaliação</h2>
+              <form (ngSubmit)="alterarAvaliacao()" class="form-avaliacao">
+                <div class="estrelas-input">
+                  <span *ngFor="let star of [1,2,3,4,5]" (click)="selecionarEstrela(star, true)">
+                    <i class="fa-star"
+                      [ngClass]="{'fas': star <= avaliacaoSelecionada.estrelas, 'far': star > avaliacaoSelecionada.estrelas}"></i>
+                  </span>
+                </div>
+                <textarea [(ngModel)]="avaliacaoSelecionada.comentario" name="comentario"
+                  placeholder="Deixe seu comentário" maxlength="80" required #comentarioAlteracao="ngModel"></textarea>
+                <div class="caracteres-restantes">
+                  {{ 80 - avaliacaoSelecionada.comentario.length }} caracteres restantes
+                </div>
+                <div class="btn-group">
+                  <button type="submit" class="btn-salvar">Salvar Alterações</button>
+                  <button type="button" class="btn-cancelar" (click)="fecharModalAlterarAvaliacao()">Cancelar</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </article>
+        <!-- Seção de Agendamento -->
+        <section class="agendamento" *ngIf="activeSection === 'agendar'">
+          <mat-form-field appearance="fill">
+            <mat-label>Escolha uma data</mat-label>
+            <input matInput [matDatepickerFilter]="myFilter" [matDatepicker]="picker" (dateChange)="onDateChange($event)">
+            <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
+            <mat-datepicker #picker></mat-datepicker>
+          </mat-form-field>
+        
+          <div *ngIf="availableTimes.length > 0">
+            <mat-form-field appearance="fill">
+              <mat-label>Escolha um horário</mat-label>
+              <mat-select [(value)]="selectedTime">
+                <mat-option *ngFor="let time of availableTimes" [value]="time">{{time}}</mat-option>
+              </mat-select>
+            </mat-form-field>
+        
+            <button mat-raised-button color="primary" (click)="agendar()">Agendar Consulta</button>
+          </div>
+        </section>
+
+      </section>
+    </section>
+    <section class="column-direita">
+      <article>
+        <p class="preco">Preço da Consulta: <span class="preco-bold">R$ 100,00</span></p>
+        <h2 class="horario-atend">Horário de Atendimento:</h2>
+        <p class="horario">Segunda a Sexta: 07:00 as 17:00</p>
+        <p class="endereco">Endereço: {{ medico.endereco }}</p>
+        <button class="btn-agendar-consulta" (click)="showAgendamentoSection()">Agendar Consulta</button>
+      </article>
+    </section>
+  </section>
+
+  <footer>
+    <article class="footer-column-1">
+      <a href="/inicio" class="footer-img"><img src="../../../assets/svg/logo.svg" alt="logo"></a>
+      <img src="../../../assets/svg/redes-sociais.svg" alt="redes-sociais">
+    </article>
+    <article class="footer-column-2">
+      <h3>Links</h3>
+      <ul>
+        <li><a href="/inicio">Início</a></li>
+        <li><a href="/servicos">Serviços</a></li>
+        <li><a href="/medicos">Médicos(as)</a></li>
+        <li><a href="/inicio">Contato</a></li>
+      </ul>
+    </article>
+    <article class="footer-column-3">
+      <h3>Eu quero:</h3>
+      <ul>
+        <li><a href="/medicos">Encontrar um Médico(a)</a></li>
+        <li><a href="/medicos">Solicitar uma Consulta</a></li>
+      </ul>
+    </article>
+  </footer>
+</main>
