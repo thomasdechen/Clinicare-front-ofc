@@ -18,3 +18,8 @@ Funções disponíveis para os médicos(as):
 
 Funções disponíveis para os secretários(as):
 - Visualizar a agenda do médico(a) responsável
+
+📞 Contato  
+Thomas Dechen Ferreira - dechendev@gmail.com  
+Link do backend: https://github.com/thomasdechen/clinicare-back-end-ofc  
+Link do frontend: https://github.com/thomasdechen/Clinicare-front-ofc  
